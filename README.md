@@ -1,17 +1,29 @@
+- Update config:
+sudo cp snort.lua /usr/local/etc/snort/snort.lua
 - Add rules:
-sudo nano /etc/snort/rules/local.rules
+sudo cp local.rules /usr/local/etc/snort/rules/local.rules
+- Run mininset:
+sudo python3 topology.py
 - Run snort
-sudo snort -i s1-eth4 -c /etc/snort/snort.conf
-- Run ryu
+sudo snort -i s1-eth4 -c /usr/local/etc/snort/snort.lua
+- Docker run services
+docker-compose up -d
+- Run aggregator
 sudo  ryu-manager --ofp-tcp-listen-port 6653 snort_ddos_app.py
-
-- Add mininet link
-sh ovs-ofctl add-flow s2 priority=1,actions=normal
-sh ovs-ofctl add-flow s1 priority=1,actions=normal
-sh ovs-ofctl add-flow s3 priority=1,actions=normal
+- Command to modify alert permissions:
+sudo chmod 777 alert_json.txt
 
 - Attack with:
-
 + h1 ping -f server1
 + h1 hping3 -1 --flood server1
 + h2 hping3 -i u5000 -S -p 80 server2
+
+- Monitor Prometheus with:
+http://localhost:9090/targets?search=
+- Login grafana with:
+http://localhost:3000
++ Username: admin
++ Password: admin
+
+- Monitor grafana
+![img.png](img.png)

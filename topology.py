@@ -52,6 +52,11 @@ def create_topology():
     # Bắt đầu network
     net.start()
 
+    # Thêm các luồng OpenFlow cho mỗi switch
+    s2.cmd('ovs-ofctl add-flow s2 priority=1,actions=normal')
+    s1.cmd('ovs-ofctl add-flow s1 priority=1,actions=normal')
+    s3.cmd('ovs-ofctl add-flow s3 priority=1,actions=normal')
+
     # Mở CLI để tương tác
     CLI(net)
 
@@ -61,4 +66,3 @@ def create_topology():
 if __name__ == '__main__':
     setLogLevel('info')
     create_topology()
-
