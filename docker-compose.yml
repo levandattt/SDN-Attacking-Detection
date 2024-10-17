@@ -1,0 +1,34 @@
+version: '3.7'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    restart: always
+
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: pushgateway
+    ports:
+      - "9001:9091"
+    restart: always
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: always
+
+volumes:
+  prometheus_data:
+  grafana_data:
