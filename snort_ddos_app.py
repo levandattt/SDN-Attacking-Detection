@@ -1,19 +1,10 @@
 import time
-from ryu.base import app_manager
-from ryu.controller import ofp_event
-from ryu.controller.handler import MAIN_DISPATCHER, CONFIG_DISPATCHER
-from ryu.controller.handler import set_ev_cls
-from ryu.ofproto import ofproto_v1_3
-import socket
 import json
 import threading
+from collections import defaultdict
 from prometheus_client import CollectorRegistry, Gauge, Counter, push_to_gateway
 
-from collections import defaultdict
-
-class SnortDDoSApp(app_manager.RyuApp):
-    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
-
+class SnortDDoSApp:
     # Prometheus metrics registry
     registry = CollectorRegistry()
 
@@ -37,19 +28,19 @@ class SnortDDoSApp(app_manager.RyuApp):
         'top_source_ips', 'Attack count per source IP', ['src_ip'], registry=registry
     )
 
-    def __init__(self, *args, **kwargs):
-        super(SnortDDoSApp, self).__init__(*args, **kwargs)
+    def __init__(self, pushgateway_url='localhost:9001', log_file="alert_json.txt"):
+        self.pushgateway_url = pushgateway_url
+        self.log_file = log_file
+
+        # Track blocked IPs
+        self.blocked_ips_dict = defaultdict(int)
+
+        # Start thread to listen to Snort alerts
         self.snort_listener_thread = threading.Thread(target=self.listen_to_snort)
         self.snort_listener_thread.start()
 
-        # Track blocked IPs and data paths
-        self.blocked_ips_dict = defaultdict(int)
-        self.datapaths = {}
-        self.pushgateway_url= 'localhost:9001'
-
     def listen_to_snort(self):
-        log_file_path = "alert_json.txt"
-        with open(log_file_path, "r") as f:
+        with open(self.log_file, "r") as f:
             f.seek(0, 2)  # Move to the end of the file
 
             while True:
@@ -59,7 +50,7 @@ class SnortDDoSApp(app_manager.RyuApp):
                         alert_info = json.loads(line.strip())
                         self.handle_alert(alert_info)
                     except json.JSONDecodeError as e:
-                        self.logger.error(f"JSON decoding failed: {e}, data: {line.strip()}")
+                        print(f"JSON decoding failed: {e}, data: {line.strip()}")
                 else:
                     time.sleep(1)
 
@@ -80,40 +71,23 @@ class SnortDDoSApp(app_manager.RyuApp):
 
         # Block IP if needed
         if "attack" in alert_info.get("msg", "").lower() and src_ip not in self.blocked_ips_dict:
-            self.logger.info(f"DDoS attack detected from {src_ip}. Blocking source...")
-            self.block_ip(src_ip)
+            print(f"DDoS attack detected from {src_ip}. Blocking source...")
             self.blocked_ips.inc()
             self.blocked_ips_dict[src_ip] = True
             self.current_blocked_ips.set(len(self.blocked_ips_dict))
 
+        # Push metrics to Prometheus Pushgateway
         self.push_metrics()
-
-    def block_ip(self, src_ip):
-        for dp in self.datapaths.values():
-            parser = dp.ofproto_parser
-            match = parser.OFPMatch(eth_type=0x0800, ipv4_src=src_ip)
-            mod = parser.OFPFlowMod(
-                datapath=dp, priority=100, match=match,
-                instructions=[parser.OFPInstructionActions(dp.ofproto.OFPIT_CLEAR_ACTIONS, [])]
-            )
-            dp.send_msg(mod)
 
     def push_metrics(self):
         try:
             push_to_gateway(self.pushgateway_url, job='snort_ddos_app', registry=self.registry)
-            self.logger.info("Metrics pushed to Prometheus Pushgateway")
+            print("Metrics successfully pushed to Prometheus Pushgateway")
         except Exception as e:
-            self.logger.error(f"Failed to push metrics: {e}")
+            print(f"Failed to push metrics: {e}")
 
-    @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
-    def switch_features_handler(self, ev):
-        datapath = ev.msg.datapath
-        self.datapaths[datapath.id] = datapath
 
-    @set_ev_cls(ofp_event.EventOFPStateChange, [MAIN_DISPATCHER, CONFIG_DISPATCHER])
-    def state_change_handler(self, ev):
-        datapath = ev.datapath
-        if ev.state == MAIN_DISPATCHER:
-            self.datapaths[datapath.id] = datapath
-        elif ev.state == 'DEAD':
-            del self.datapaths[datapath.id]
+# Usage
+if __name__ == "__main__":
+    app = SnortDDoSApp()
+    print("Aggregator has started")

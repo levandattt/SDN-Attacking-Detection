@@ -9,7 +9,7 @@ sudo snort -i s1-eth4 -c /usr/local/etc/snort/snort.lua
 - Docker run services
 docker-compose up -d
 - Run aggregator
-sudo  ryu-manager --ofp-tcp-listen-port 6653 snort_ddos_app.py
+python3 snort_ddos_app.py
 - Command to modify alert permissions:
 sudo chmod 777 alert_json.txt
 
@@ -27,3 +27,5 @@ http://localhost:3000
 
 - Monitor grafana
 ![img.png](img.png)
+- Delete the data with:
+curl -X DELETE http://localhost:9001/metrics/job/snort_ddos_app
