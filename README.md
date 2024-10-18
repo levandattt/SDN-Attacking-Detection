@@ -1,3 +1,4 @@
+- Use virtualenv named myenv
 - Update config:
 sudo cp snort.lua /usr/local/etc/snort/snort.lua
 - Add rules:
@@ -9,9 +10,7 @@ sudo snort -i s1-eth4 -c /usr/local/etc/snort/snort.lua
 - Docker run services
 docker-compose up -d
 - Run aggregator
-python3 snort_ddos_app.py
-- Command to modify alert permissions:
-sudo chmod 777 alert_json.txt
+sudo myenv/bin/python3 snort_ddos_app.py
 
 - Attack with:
 + h1 ping -f server1
