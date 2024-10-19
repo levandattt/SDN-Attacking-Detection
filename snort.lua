@@ -274,7 +274,7 @@ alert_json = {
     file = true,
     -- filename = "/var/log/snort/snort_alert.json",
     limit = 100000,
-	fields = 'timestamp msg proto src_addr dst_addr',
+	fields = 'timestamp msg proto src_addr dst_addr pkt_len',
 }
 
 -- packet logging

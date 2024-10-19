@@ -18,6 +18,17 @@ services:
       - "9001:9091"
     restart: always
 
+  loki:
+    image: grafana/loki:2.8.2  # Using a fixed, stable version
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    restart: always
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -28,7 +39,11 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
     restart: always
+    depends_on:
+      - prometheus
+      - loki
 
 volumes:
   prometheus_data:
   grafana_data:
+  loki_data:
