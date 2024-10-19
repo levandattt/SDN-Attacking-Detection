@@ -1,0 +1,4 @@
+- [ ] Kiểm soát tần suất snort log, ghi nhận log, hiển thị log trên Grafna
+- [ ] Chốt các loại thông số tổng quan, thông số cơ bản cho ICMP, TCP 
+- [ ] Chặn IP
+- [ ] Ghi nhận các loại tấn công khác
