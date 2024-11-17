@@ -5,6 +5,10 @@ sudo cp snort.lua /usr/local/etc/snort/snort.lua
 sudo cp local.rules /usr/local/etc/snort/rules/local.rules
 - Run mininset:
 sudo python3 topology.py
+- Run asn static route:
++ sudo python3 asn_static_route.py
++ test ping:
+ d1 ping google_2
 - Run snort
 sudo snort -i s1-eth4 -c /usr/local/etc/snort/snort.lua
 - Docker run services
