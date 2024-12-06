@@ -10,7 +10,7 @@ sudo python3 topology.py
 + test ping:
  d1 ping google_2
 - Run snort
-sudo snort -i s1-eth4 -c /usr/local/etc/snort/snort.lua
+sudo snort -i as2_r2-eth0 -c /usr/local/etc/snort/snort.lua
 - Docker run services
 docker-compose up -d
 - Run aggregator

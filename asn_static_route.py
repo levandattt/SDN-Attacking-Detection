@@ -174,11 +174,12 @@ class NetworkTopo(Topo):
 
         google_server_1 = self.add_host('google_1', ip='74.125.119.2/24', router_info=as2_r1_router)
         google_server_2 = self.add_host('google_2', ip='209.85.244.2/24', router_info=as2_r2_router)
+
         self.addLink(google_server_1, as2_r1_s1)
         self.addLink(google_server_2, as2_r2_s1)
 
-        self.attackers = self.add_attackers("atk_r1",50, '113.22.0', as1_r1_router, as1_r1_s1)
-        # self.attackers.extend(self.add_attackers("atk_r2",2, '113.22.0', as1_r2_router, as1_r2_s1))
+        # self.attackers = self.add_attackers("atk_r2",5, '42.112.3', as1_r2_router, as1_r2_s1)
+        # self.attackers = self.add_attackers("atk_r1",2, '113.22.0', as1_r1_router, as1_r1_s1)
 
         self.victims = [google_server_1, google_server_2]
 
@@ -203,7 +204,16 @@ def run():
     net = Mininet(topo=topo)
     net.start()
     topo.apply_routes(net)
-    topo.attack(net, '209.85.244.2', 'ping -f')
+
+    google_2 = net.get('google_2')
+    # Open SSH port 22
+    google_2.cmd('/usr/sbin/sshd -D &')
+    google_2.cmd('python3 -m http.server 80 &')
+
+    # hping3 -i u5000 -S -p 80
+    # topo.attack(net, '209.85.244.2', 'ping -f')
+    # topo.attack(net, '209.85.244.2', 'nmap')
+    # topo.attack(net, '209.85.244.2', 'hping3 -i u5000 -S -p 80')
 
     # Test connectivity in CLI
     CLI(net)
